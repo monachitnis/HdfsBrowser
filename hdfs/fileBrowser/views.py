@@ -2,6 +2,11 @@ from django.http import HttpResponse
 import pexpect
 import os, sys, time, re, getopt, getpass
 import traceback
+from django.views.decorators.csrf import csrf_exempt
+from django.core.context_processors import csrf
+from django.shortcuts import render_to_response
+from django import template 
+from django.template import Template, Context, RequestContext
 
 SSH_NEWKEY = '(?i)are you sure you want to continue connecting'
 
@@ -74,3 +79,19 @@ def list_view(request):
     	hput = child.before
 	
 	return HttpResponse("<html> <body> Hello, World: \n <li>"+hls+"</li> </body></html>" )
+
+def browser_view(request):
+	fp = open('/Users/siddharn/Django/Django-1.5.1/django/bin/hdfs/fileBrowser/templates/fileBrowser/browse.html')
+	t = Template(fp.read())
+    	fp.close()
+    	html = t.render(Context())
+    	return HttpResponse(html)
+		
+@csrf_exempt		
+def api_view(request):
+	r=['	<ul class="jqueryFileTree" style="display: none;">\
+		    <li class="directory collapsed"><a href="#" rel="/this/folder/">Folder Name</a></li>\
+		    <li class="file ext_txt"><a href="#" rel="/this/folder/filename.txt">filename.txt</a></li>\
+		</ul>']
+   
+	return HttpResponse(''.join(r))
