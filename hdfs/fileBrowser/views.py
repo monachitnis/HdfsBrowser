@@ -1,3 +1,4 @@
+from django.views.decorators.csrf import csrf_protect
 from django.http import HttpResponse
 import pexpect
 import os, sys, time, re, getopt, getpass
@@ -6,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.context_processors import csrf
 from django.shortcuts import render_to_response
 from django import template 
-from django.template import Template, Context, RequestContext
+from django.template import Template, Context, RequestContext, loader
 
 SSH_NEWKEY = '(?i)are you sure you want to continue connecting'
 
@@ -14,7 +15,34 @@ COMMAND_PROMPT = '[#$] '
 user='siddharn'
 host='mithril-gw.red.ygrid.yahoo.com'
 password='281Laxman!'
- 
+
+
+@csrf_protect
+def login_user(request):
+    print "in Logn_user"
+    username = password = state = ''
+    if request.POST:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if username == 'a' and password == 'a':
+            grid_list = get_grid_list()
+            return render_to_response('fileBrowser/gridListing.html',{'grid_list':grid_list,'username': username}, context_instance=RequestContext(request))
+        else:
+            state = "Incorrect username & password"
+            return render_to_response('fileBrowser/login.html',{'state':state},context_instance=RequestContext(request))
+    else:
+        state = "Please log in below..."
+        return render_to_response('fileBrowser/login.html', {'state':state}, context_instance=RequestContext(request))
+
+def get_grid_list():
+    print 'in grid Listing'
+    grid_list = ['files.py', 'abc.txt']
+    return grid_list
+
+
+def grid_listing(request):
+	return render_to_response('fileBrowser/gridListing.html')
+
 def list_view(request):
 	child = pexpect.spawn('ssh -l %s %s'%(user, host))
 	COMMAND_PROMPT = '[#$] '
@@ -81,11 +109,9 @@ def list_view(request):
 	return HttpResponse("<html> <body> Hello, World: \n <li>"+hls+"</li> </body></html>" )
 
 def browser_view(request):
-	fp = open('/Users/siddharn/Django/Django-1.5.1/django/bin/hdfs/fileBrowser/templates/fileBrowser/browse.html')
-	t = Template(fp.read())
-    	fp.close()
-    	html = t.render(Context())
-    	return HttpResponse(html)
+	template = loader.get_template('fileBrowser/browse.html')
+	context = Context({})
+        return HttpResponse(template.render(context))
 		
 @csrf_exempt		
 def api_view(request):

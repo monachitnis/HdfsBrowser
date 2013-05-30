@@ -1,0 +1,98 @@
+#by 
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+
+
+body
+{
+	position: relative;
+	margin: 50;
+	padding: 20;
+	left: 10px;
+	text-align: left;
+	color: #000;
+	background-color: #FFF;
+	background: #191417 url('/assets/images/bg_hp.png') repeat-x;
+}
+
+
+#container
+{
+	margin: 1em 5%;
+	background-color: #FFF;
+	border: 1px solid #333;
+	background-position: center;
+}
+
+img
+{
+	position:relative;
+	top:0px;
+	left:800px;
+}
+#banner
+{
+	top: 20px;
+	background-color: #666;
+	border-bottom: 1px solid #333;
+}
+
+#banner h1
+{
+	margin: 0;
+	padding: .5em;
+}
+
+
+#nav
+{
+	position: fixed
+	float: left;
+	width: 300px;
+	margin-left: 10px;
+	padding-top: 1em;
+}
+
+#nav p
+{ 
+	margin-top: 0; 
+}
+
+#nav
+{
+	float: left;
+	width: 160px;
+	margin-left: 10px;
+	padding-top: 1em;
+}
+
+#content
+{
+	padding-top: 1em;
+	position: relative;
+	left:20px;
+	margin: 0 2em 0 200px;
+}
+
+#footer-content {
+	height: 262px;
+	width: 935px;
+	padding: 13px 0 0 16px;
+	background-color: #352C2E;
+	font: normal normal normal 11px/14px Arial;
+	color: #979797;
+}
+
+#footer
+{
+	clear: both;
+	padding: 1em;
+	text-align: right;
+	
+	font: normal normal normal 11px/14px Arial;
+        color: #979797
+	border-top: 1px solid #333;
+}
