@@ -14,5 +14,7 @@ urlpatterns = patterns('',
     url(r'^upload$', views.upload, name='upload'),
     url(r'^move$', views.move, name='move'),
     url(r'^chown$', views.chown, name='chown'),
-    url(r'^chmod$', views.chmod, name='chmod')
+    url(r'^chmod$', views.chmod, name='chmod'),
+    url(r'^grids$', views.grids, name='grids')
+    
 )

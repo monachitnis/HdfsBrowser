@@ -16,12 +16,14 @@
 			
 			$(document).ready( function() {
 				
-				$('#fileTreeDemo').fileTree({root: '/user/{{username}}/', script: '/api' }, function(file) { 
+				$('#fileTreeDemo').fileTree({root: '/user/{{username}}/', script: '/api?name={{name}}' }, function(file) { 
 					alert(file);
 				});
 				
 				$('#fileContentDemo').load("/info");
-				
+				$('#my-button-new').click( function(){
+                                       $.post('/mkdir');
+                                       });		
 			});
 
 		</script>
@@ -35,38 +37,41 @@
 
         <div class="nav-inner">
             <div class="pure-menu pure-menu-open">
-                <ul>
-                    <li class="pure-menu-heading">Cluster</li>
-                    <li><a href="#">Red</a></li>
-                    <li><a href="#">Green</a></li>
-                    <li><a href="#">Blue</a></li>
-                    <li><a href="#">Gold</a></li>
-                    <li class="pure-menu-heading">Operations </li>
-		        <a class="pure-button primary-button" href="#">Create Directory</a>
-            		<a class="pure-button primary-button" href="#">Upload</a>
-                </ul>
+		{% block bodyclass %}
+                               {% if grid_list %}
+                               <ul>
+                               {% for var in grid_list %}
+                               <li><a href=/grids?name={{var}}&username={{username}}>{{ var }}</a></li>
+                               {% endfor %}
+                               </ul>
+                               {% endif %}
+                               {% endblock %}
+                               {% block content-class %}{% endblock %}
             </div>
         </div>
     </div>	
 
 <div class="pure-u" id="list">
         <div class="content">
-		<div class="pure-u-3-4">
-		    <div id="fileTreeDemo"></div>
-		</div>
-	</div>
+                <div class="pure-u-3-4">
+                    <div id="fileTreeDemo"></div>
+                </div>
+        </div>
 </div>
 
 <div class="pure-u" id="main">
         <div class="content">
-	<div class="email-content-body pure-u-1">
+        <div class="email-content-body pure-u-1">
+	<div class="pure-u-1-2 email-content-controls">
 	<p>
-		<div id="fileContentDemo">
-	</p>
-<p>
-                        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation 
-		</p>
-	</div>
+             <div id="fileContentDemo"></div>
+        </p>
+                       <a class="pure-button secondary-button" id="my-button-new" >New Folder</a>
+                       <a class="pure-button secondary-button" id="my-button-delete">Delete</a>
+                       <a class="pure-button secondary-button" id="my-button-move">Move To</a>
+
+       </div>
+</div>
 </div>
 </div>
 
