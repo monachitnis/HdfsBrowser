@@ -20,14 +20,13 @@ username = ''
 
 @csrf_protect
 def login_user(request):
-    print "in Logn_user"
     username = password = state = ''
     if request.POST:
         username = request.POST.get('username')
         password = request.POST.get('password')
-        if username == 'a' and password == 'a':
-            grid_list = get_grid_list()
-            return render_to_response('fileBrowser/gridListing.html',{'grid_list':grid_list,'username': username}, context_instance=RequestContext(request))
+        if kinit_auth(username, password) == 0:
+            grid_list = get_grid_list(username)
+            return render_to_response('fileBrowser/browse.html',{'grid_list':grid_list,'username': username}, context_instance=RequestContext(request))
         else:
             state = "Incorrect username & password"
             return render_to_response('fileBrowser/login.html',{'state':state},context_instance=RequestContext(request))
@@ -35,25 +34,55 @@ def login_user(request):
         state = "Please log in below..."
         return render_to_response('fileBrowser/login.html', {'state':state}, context_instance=RequestContext(request))
 
-def get_grid_list():
-    print 'in grid Listing'
-    grid_list = ['files.py', 'abc.txt']
-    return grid_list
+def get_grid_list(username):
+	grid_list = []
+	all_clusters = ['AxoniteBlue-nn1-pxy.blue',
+		 	'AxoniteRed-nn1-pxy.red',
+			'BassniumRed-nn1-pxy.red',
+			'BassniumTan-nn1-pxy.tan',
+			'CobaltBlue-nn1-pxy.blue',
+			'DilithiumBlue-nn1-pxy.blue',
+			'DilithiumRed-nn1-pxy.red',
+			'KryptoniteRed-nn1-pxy.red',
+			'LuxBlue-nn1-pxy.blue',
+			'LuxRed-nn1-pxy.red',
+			'MithrilBlue-nn1-pxy.blue',
+			'MithrilRed-nn1-pxy.red',
+			'DilithiumBlue-nn1-pxy.blue',
+			'NitroBlue-nn1-pxy.blue',
+			'OxiumBlue-nn1-pxy.blue',
+			'OxiumTan-nn1-pxy.tan',
+			'PhazonTan-nn1-pxy.tan',
+			'TiberiumTan-nn1-pxy.tan',
+			'ReluxTan-nn1-pxy.tan',
+			'UraniumTan-nn1-pxy.tan',
+			'UraniumBlue-nn1-pxy.blue',
+			'ZaniumTan-nn1-pxy.tan']
+    	for c in all_clusters:
+		url = 'https://' + c + '.ygrid.yahoo.com:4443/fs/user/' + username
+		curl_args = [ curl, '--cacert', cert, '--negotiate', '-u', 'login:key', url ]
+        	process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        	out, err = process.communicate()
+		#if not parseHdfsProxyOutput(out).__len__() == 0:
+		if "FileNotFound" in out:
+			continue
+		grid_list.append(c.split('-',1)[0])
+    	return grid_list
 
 def grid_listing(request):
 	return render_to_response('fileBrowser/gridListing.html')
  
-def first_load(request,dir):
-        username='chitnis' #get from request
-        realm='DS.CORP.YAHOO.COM' #get from request
+def kinit_auth(username, password):
+        realm='DS.CORP.YAHOO.COM'
         principal = username + '@' + realm
-        password='Eelix!r01' #get from request
-        child = pexpect.spawn ('kinit', [principal])
+	child = pexpect.spawn ('kinit', [principal])
         child.expect ('Password for ' + principal + ': ')
         child.sendline (password)
-        COMMAND_PROMPT = "\[PEXPECT\]\$ "
-        child.sendline ("PS1='[PEXPECT]\$ '")
-        #child.expect (COMMAND_PROMPT) # EOF exception!!
+	#print child.before
+        #COMMAND_PROMPT = "\[PEXPECT\]\$ "
+        #child.sendline ("PS1='[PEXPECT]\$ '")
+	i = child.expect([pexpect.EOF, COMMAND_PROMPT, "kinit(v5): Preauthentication failed while getting initial credentials"])
+	return i
         #curl = pycurl.Curl()
         #curl.setopt(curl.VERBOSE, 1)
         #curl.setopt(pycurl.URL, proxy)
@@ -62,25 +91,12 @@ def first_load(request,dir):
         #curl.setopt(pycurl.HTTPAUTH, pycurl.HTTPAUTH_BASIC)
         #curl.perform()
         #curl.close()
-        proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
-        operation = 'status' #get from request
-        relative_path = dir
-        ws_url = proxy_server + 'user/' + username + '/' + relative_path + '?op=' + operation
-        curl_args = [ curl, '-c', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
-        process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #curl = subprocess.Popen(curl_args, shell=True)
-        out, err = process.communicate()
-        #curl.terminate();
-        print(out)
-	return parseHdfsProxyOutput(out)
-        #return HttpResponse("<html> <body><li>LIST "+relative_path+"</li> </body></html>" )
 
 def list(request,dir):
-        first_load(request,dir)
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         operation = 'status'
         relative_path = dir
-        ws_url = proxy_server + 'user/' + username + '/' + relative_path + '?op=' + operation
+        ws_url = proxy_server + relative_path + '?op=' + operation
         curl_args = [ curl, '-c', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
         process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #curl = subprocess.Popen(curl_args, shell=True)
@@ -90,8 +106,7 @@ def list(request,dir):
 	return parseHdfsProxyOutput(out)
         #return HttpResponse("<html> <body><li>LIST "+relative_path+"</li> </body></html>" )
 
-def mkdir(request):
-        first_load(request)
+def mkdir(request,dir):
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         operation = 'mkdir'
         dirname = 'newdir'
@@ -104,8 +119,7 @@ def mkdir(request):
         print(out)
         return HttpResponse("<html> <body><li>MKDIR "+dirname+"</li> </body></html>" )
 
-def delete(request):
-        first_load(request)
+def delete(request,dir):
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         filename = 'mona.txt'
         operation = 'stream'
@@ -119,7 +133,6 @@ def delete(request):
         return HttpResponse("<html> <body><li>DELETED "+filename+"</li> </body></html>" )
 
 def upload(request):
-        first_load(request)
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         dest = 'dest.file'
         src = 'views.py.OLD'
@@ -134,7 +147,6 @@ def upload(request):
         return HttpResponse("<html> <body><li>UPLOADED "+dest+"</li> </body></html>" )
 
 def move(request):
-        first_load(request)
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         operation = 'move'
         src = 'srcdir'
@@ -149,7 +161,6 @@ def move(request):
         return HttpResponse("<html> <body><li>MOVED "+src+" to "+dst+"</li> </body></html>" )
 
 def chmod(request):
-        first_load(request)
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         operation = 'chmod'
         permission = '644'
@@ -164,7 +175,6 @@ def chmod(request):
         return HttpResponse("<html> <body><li>CHMOD "+dirname+"</li> </body></html>" )
 
 def chown(request):
-        first_load(request)
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         operation = 'chown'
         owner = 'user'
@@ -204,11 +214,8 @@ def api_view(request):
         try:
                 r=['<ul class="jqueryFileTree" style="display: none;">']
 		dir = request.POST.get('dir')
-                print dir
                 d=urllib.unquote(request.POST.get('dir','/var'))
-                print d
                 dir_list = get_dir_list(request,dir)
-                print dir_list
                 for obj in dir_list:
                         ff = obj.split(':')[0]
                         f =  ff.rpartition('/')[2]
@@ -239,6 +246,7 @@ def parseHdfsProxyOutput(listContents):
                 dirListing.append(dir.get('path')+':d')
         for f in root.findall('file'):
                 dirListing.append(f.get('path')+':f')
-        dirListing.pop(0)
+        #if not dirListing.__len__() == 0:
+	dirListing.pop(0)
         return dirListing
 
