@@ -16,7 +16,7 @@
 			
 			$(document).ready( function() {
 				
-				$('#fileTreeDemo').fileTree({root: '/Users/anupamam/', script: '/api' }, function(file) { 
+				$('#fileTreeDemo').fileTree({root: '/user/{{username}}/', script: '/api' }, function(file) { 
 					alert(file);
 				});
 				
