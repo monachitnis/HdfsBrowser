@@ -2,6 +2,7 @@
 from django.views.decorators.csrf import csrf_protect
 from django.http import HttpResponse
 import pexpect
+import urllib
 import os, sys, time, re, getopt, getpass
 import traceback
 import httplib, subprocess
@@ -184,25 +185,34 @@ def browser_view(request):
         return HttpResponse(template.render(context))
 
 #ANUs function to fetch listing for given dir 
-def get_dir_list(dir):
+def get_dir_list(request,dir):
 	#d = ['/user/chitnis:d', '/user/chitnis/.Trash:d', '/user/chitnis/.staging:d', '/user/chitnis/examples:d', '/user/chitnis/oozie-wrkf:d', '/user/chitnis/proxycookie.txt:f'] 
 	request = '' #get request with more details
 	array = list(request,dir)
 	return array  
+
+
+#to find
+def is_dir(dir):
+        if dir.split(':')[1] == 'd':
+                return True
+        return False
 
 @csrf_exempt
 def api_view(request):
         r=['<ul class="jqueryFileTree" style="display: none;">']
         try:
                 r=['<ul class="jqueryFileTree" style="display: none;">']
-                dir = request.POST.get('dir')
+		dir = request.POST.get('dir')
                 print dir
                 d=urllib.unquote(request.POST.get('dir','/var'))
                 print d
-                #dir_list = get_dir_list(dir)
-                for f in os.listdir(d):
-                        ff=os.path.join(d,f)
-                        if os.path.isdir(ff):
+                dir_list = get_dir_list(request,dir)
+                print dir_list
+                for obj in dir_list:
+                        ff = obj.split(':')[0]
+                        f =  ff.rpartition('/')[2]
+                        if is_dir(obj):
                                 r.append('<li class="directory collapsed"><a href="#" rel="%s/">%s</a></li>' % (ff,f))
                         else:
                                 e=os.path.splitext(f)[1][1:] # get .ext and remove dot
