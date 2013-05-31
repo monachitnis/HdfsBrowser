@@ -111,8 +111,36 @@ def browser_view(request):
 	context = Context({})
         return HttpResponse(template.render(context))
 
-@csrf_exempt		
+#Mo - Use this function to fetch listing for given dir 
+def get_dir_list(dir):
+	d = ['/user/chitnis:d', '/user/chitnis/.Trash:d', '/user/chitnis/.staging:d', '/user/chitnis/examples:d', '/user/chitnis/oozie-wrkf:d', '/user/chitnis/proxycookie.txt:f'] 
+	return d  
+
+@csrf_exempt
 def api_view(request):
+        r=['<ul class="jqueryFileTree" style="display: none;">']
+        try:
+                r=['<ul class="jqueryFileTree" style="display: none;">']
+                dir = request.POST.get('dir')
+                print dir
+                d=urllib.unquote(request.POST.get('dir','/var'))
+                print d
+                #dir_list = get_dir_list(dir)
+                for f in os.listdir(d):
+                        ff=os.path.join(d,f)
+                        if os.path.isdir(ff):
+                                r.append('<li class="directory collapsed"><a href="#" rel="%s/">%s</a></li>' % (ff,f))
+                        else:
+                                e=os.path.splitext(f)[1][1:] # get .ext and remove dot
+                                r.append('<li class="file ext_%s"><a href="#" rel="%s">%s</a></li>' % (e,ff,f))
+                r.append('</ul>')
+        except Exception,e:
+                r.append('Could not load directory: %s' % str(e))
+                r.append('</ul>')
+        return HttpResponse(''.join(r))
+
+@csrf_exempt		
+def dir_view(request):
 	r=['	<ul class="jqueryFileTree" style="display: none;">\
 		    <li class="directory collapsed"><a href="#" rel="/this/folder/">Folder Name</a></li>\
 		    <li class="file ext_txt"><a href="#" rel="/this/folder/filename.txt">filename.txt</a></li>\
