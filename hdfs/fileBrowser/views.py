@@ -47,6 +47,8 @@ def hdfs_proxy(request):
    	child = pexpect.spawn ('kinit', [principal])
     	child.expect ('Password for ' + principal + ': ')
    	child.sendline (password)
+	COMMAND_PROMPT = "\[PEXPECT\]\$ "
+        child.sendline ("PS1='[PEXPECT]\$ '")
     	#child.expect (COMMAND_PROMPT) # EOF exception!!
 	
 	curl = '/usr/bin/curl'
@@ -54,15 +56,48 @@ def hdfs_proxy(request):
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
 	operation = 'status'
 	ws_url = proxy_server + 'user/' + username + '?op=' + operation
-	curl_args = [ curl, '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
-	curl = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	curl_args = [ curl, '-c', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
+	process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	#curl = subprocess.Popen(curl_args, shell=True)
-	out, err = curl.communicate()
+	out, err = process.communicate()
 	#curl.terminate();
-	print(curl)
+	print(out)
+
+	operation = 'mkdir'
+	newdir = 'newdir'
+        ws_url = proxy_server + 'user/' + username + '/newdir?op=' + operation
+        curl_args = [ curl, '-X', 'PUT', '-b', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
+        process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #curl = subprocess.Popen(curl_args, shell=True)
+        out, err = process.communicate()
+        #curl.terminate();
+        print(out)
+
+	file = 'mona.txt'
+	operation = 'stream'
+        ws_url = proxy_server + 'user/' + username + '/' + file + '?op=' + operation
+        curl_args = [ curl, '-b', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url, '--header', 'Range: bytes=0-1000' ]
+        process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #curl = subprocess.Popen(curl_args, shell=True)
+        out, err = process.communicate()
+        #curl.terminate();
+        print(out)
+
 	return HttpResponse("<html> <body><li>"+out+"</li> </body></html>" )
-	
-        #curl = pycurl.Curl()
+
+	dest = 'dest.file'
+	src = 'views.py.OLD'
+	operation = 'create'
+        ws_url = proxy_server + 'user/' + username + '/' + dest + '?op=' + operation + '&overwrite=true'
+        curl_args = [ curl, '-X', 'PUT', '-b', 'proxycookie.txt', '--cacert', cert, '-T', src, '--negotiate', '-u', 'login:key', ws_url ]
+        process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #curl = subprocess.Popen(curl_args, shell=True)
+        out, err = process.communicate()
+        #curl.terminate();
+        print(dest)
+
+	return HttpResponse("<html> <body><li>"+dest+"</li> </body></html>" )
+	#curl = pycurl.Curl()
 	#curl.setopt(curl.VERBOSE, 1)
 	#curl.setopt(pycurl.URL, proxy)
         #curl.setopt(pycurl.CAINFO, certdir)
