@@ -5,6 +5,7 @@ import pexpect
 import os, sys, time, re, getopt, getpass
 import traceback
 import httplib, subprocess
+import xml.etree.ElementTree as ET
 from django.views.decorators.csrf import csrf_exempt
 from django.core.context_processors import csrf
 from django.shortcuts import render_to_response
@@ -41,11 +42,11 @@ def get_grid_list():
 def grid_listing(request):
 	return render_to_response('fileBrowser/gridListing.html')
  
-def first_load(request):
-        username='chitnis'
-        realm='DS.CORP.YAHOO.COM'
+def first_load(request,dir):
+        username='chitnis' #get from request
+        realm='DS.CORP.YAHOO.COM' #get from request
         principal = username + '@' + realm
-        password='Eelix!r01' 
+        password='Eelix!r01' #get from request
         child = pexpect.spawn ('kinit', [principal])
         child.expect ('Password for ' + principal + ': ')
         child.sendline (password)
@@ -61,8 +62,8 @@ def first_load(request):
         #curl.perform()
         #curl.close()
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
-        operation = 'status'
-        relative_path = ''
+        operation = 'status' #get from request
+        relative_path = dir
         ws_url = proxy_server + 'user/' + username + '/' + relative_path + '?op=' + operation
         curl_args = [ curl, '-c', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
         process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -70,13 +71,14 @@ def first_load(request):
         out, err = process.communicate()
         #curl.terminate();
         print(out)
-        return HttpResponse("<html> <body><li>LIST "+relative_path+"</li> </body></html>" )
+	return parseHdfsProxyOutput(out)
+        #return HttpResponse("<html> <body><li>LIST "+relative_path+"</li> </body></html>" )
 
-def list(request):
-        first_load(request)
+def list(request,dir):
+        first_load(request,dir)
         proxy_server = 'https://axoniteblue-nn1-pxy.blue.ygrid.yahoo.com:4443/fs/'
         operation = 'status'
-        relative_path = ''
+        relative_path = dir
         ws_url = proxy_server + 'user/' + username + '/' + relative_path + '?op=' + operation
         curl_args = [ curl, '-c', 'proxycookie.txt', '--cacert', cert, '--negotiate', '-u', 'login:key', ws_url ]
         process = subprocess.Popen(curl_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -84,7 +86,8 @@ def list(request):
         out, err = process.communicate()
         #curl.terminate();
         print(out)
-        return HttpResponse("<html> <body><li>LIST "+relative_path+"</li> </body></html>" )
+	return parseHdfsProxyOutput(out)
+        #return HttpResponse("<html> <body><li>LIST "+relative_path+"</li> </body></html>" )
 
 def mkdir(request):
         first_load(request)
@@ -180,10 +183,12 @@ def browser_view(request):
 	context = Context({})
         return HttpResponse(template.render(context))
 
-#Mo - Use this function to fetch listing for given dir 
+#ANUs function to fetch listing for given dir 
 def get_dir_list(dir):
-	d = ['/user/chitnis:d', '/user/chitnis/.Trash:d', '/user/chitnis/.staging:d', '/user/chitnis/examples:d', '/user/chitnis/oozie-wrkf:d', '/user/chitnis/proxycookie.txt:f'] 
-	return d  
+	#d = ['/user/chitnis:d', '/user/chitnis/.Trash:d', '/user/chitnis/.staging:d', '/user/chitnis/examples:d', '/user/chitnis/oozie-wrkf:d', '/user/chitnis/proxycookie.txt:f'] 
+	request = '' #get request with more details
+	array = list(request,dir)
+	return array  
 
 @csrf_exempt
 def api_view(request):
@@ -216,3 +221,14 @@ def dir_view(request):
 		</ul>']
    
 	return HttpResponse(''.join(r))
+
+def parseHdfsProxyOutput(listContents):
+        root = ET.fromstring(listContents)
+        dirListing= []
+        for dir in root.findall('directory'):
+                dirListing.append(dir.get('path')+':d')
+        for f in root.findall('file'):
+                dirListing.append(f.get('path')+':f')
+        dirListing.pop(0)
+        return dirListing
+
